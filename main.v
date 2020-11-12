@@ -2,15 +2,14 @@
 
 module main;
     wire clk;
-    engine #(.FPS(60)) e(clk);
+    wire [31:0] cnt;
 
-    reg [31:0] cnt = 0;
-    always @(posedge clk) begin
-        $display("%d: tictoc", cnt);
-        cnt <= cnt + 1;
-    end
+    engine #(.FPS(60)) e(clk);
+    control c(clk, cnt);
+    view v(clk, cnt);
 endmodule
 
+// TODO: use timescale instead of busy loop
 module engine(clk);
     parameter FPS = 60.0;
     output reg clk = 0;
@@ -23,6 +22,26 @@ module engine(clk);
         end else begin
             cnt <= cnt + 1;
         end
+    end
+endmodule
+
+module control(clk, cnt);
+    input  wire clk;
+    output reg [31:0] cnt;
+
+    initial cnt = 0;
+    always @(posedge clk) cnt <= cnt + 1;
+endmodule
+
+module view(clk, cnt);
+    input  wire clk;
+    input  wire [31:0] cnt;
+
+    always @(posedge clk) begin
+        // clear entire screen
+        $write("\033[2J\033[H");
+
+        $display("%d", cnt);
     end
 endmodule
 
