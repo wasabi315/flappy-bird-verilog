@@ -1,10 +1,18 @@
-SRCS = $(wildcard *.v)
-PROG = main
+CSRCS = input.c
+VSRCS = main.v
+EXES = main input
 
-$(PROG): $(SRCS)
-	iverilog -o $@ $(SRCS)
+all: $(EXES)
+
+main: $(VSRCS)
+	iverilog -o $@ $(VSRCS)
+
+CC = gcc
+CFLAGS = -Wall -Werror -O2
+
+input: $(CSRCS)
+	$(CC) $(CFLAGS) -o $@ $(CSRCS)
 
 .PHONY: clean
 clean:
-	$(RM) -f $(PROG)
-
+	$(RM) -f $(EXES)
