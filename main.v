@@ -1,38 +1,36 @@
 `timescale 1 us / 1 us
 
-module main;
-    wire clk;
-    wire [31:0] cnt;
+`define STDIN 32'h8000_0000
 
-    engine #(.FPS(60)) e(clk);
-    control c(clk, cnt);
+module main;
+    reg clk = 0;
+    initial forever #1 clk <= ~clk;
+
+    wire [7:0] inp;
+    keyboard k(clk, inp);
+
+    wire [31:0] cnt;
+    control c(clk, inp, cnt);
     view v(clk, cnt);
 endmodule
 
-// TODO: use timescale instead of busy loop
-module engine(clk);
-    parameter FPS = 60.0;
-    output reg clk = 0;
+module keyboard(clk, inp);
+    input  wire clk;
+    output reg [7:0] inp;
 
-    reg [31:0] cnt = 0;
-    initial forever #1 begin
-        if (cnt * FPS > 499999) begin
-            cnt <= 0;
-            clk <= ~clk;
-        end else begin
-            cnt <= cnt + 1;
-        end
+    always @(posedge clk) begin
+        if ($feof(`STDIN)) $finish();
+        inp <= $fgetc(`STDIN);
     end
 endmodule
 
-module control(clk, cnt);
+module control(clk, inp, cnt);
     input  wire clk;
+    input  wire [7:0] inp;
     output reg [31:0] cnt = 0;
 
-    reg [31:0] cnt0 = 0;
-    always @(posedge clk) cnt0 <= (cnt0 == 49) ? 0 : cnt0 + 1;
-    always @(posedge clk) if (cnt0 == 49) cnt <= cnt + 1;
-    always @(posedge clk) if (cnt == 49) $finish();
+    always @(posedge clk) if (inp != 0) cnt <= cnt + 1;
+    always @(posedge clk) if (cnt == 51) $finish();
 endmodule
 
 module view(clk, cnt);
@@ -47,12 +45,12 @@ module view(clk, cnt);
 
         ansi.fg("black");
         ansi.bg("green");
-        $write("[%3d%%]", (cnt + 1) << 1);
+        $write("[%3d%%]", cnt << 1);
         ansi.reset();
 
         $write(" [");
         for (i = 0; i < 50; i = i + 1)
-            if (i <= cnt + 1) $write("#");
+            if (i < cnt) $write("#");
             else $write(".");
         $write("]");
         ansi.flush();
@@ -98,4 +96,3 @@ module ANSI;
         $display("");
     endtask
 endmodule
-
