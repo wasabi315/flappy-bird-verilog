@@ -13,6 +13,9 @@ CFLAGS = -Wall -Werror -O2
 input: $(CSRCS)
 	$(CC) $(CFLAGS) -o $@ $(CSRCS)
 
-.PHONY: clean
+.PHONY: run clean
+run:
+	./input | ./main
+
 clean:
 	$(RM) -f $(EXES)
