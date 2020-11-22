@@ -112,7 +112,7 @@ module controller(clk, inp, n_row, n_col, scene, bird, gaps);
     reg is_flapping = 0;
     real y = 20.0;
     real v = 0.0;
-    always @(posedge clk) begin
+    always @(posedge clk) if (scene == `SCENE_PLAYING) begin
         is_flapping <= |kpbuf;
         v <= (|kpbuf) ? 0.3 : v - 0.01;
         y <= y + v;
