@@ -66,6 +66,8 @@ endmodule
 `define SCENE_PLAYING  1
 `define SCENE_GAMEOVER 2
 
+`define SPACE 32
+
 module controller(clk, inp, scene, bird, gaps);
     input  wire clk;
     input  wire [7:0] inp;
@@ -88,11 +90,11 @@ module controller(clk, inp, scene, bird, gaps);
     end
 
     always @(posedge clk) begin
-        if (scene == `SCENE_SPLASH && inp != 0) scene <= `SCENE_PLAYING;
+        if (scene == `SCENE_SPLASH && inp == `SPACE) scene <= `SCENE_PLAYING;
         if (scene == `SCENE_PLAYING && inp == 120) scene <= `SCENE_GAMEOVER;
     end
 
-    wire keypress = (inp == /* space */ 32);
+    wire keypress = (inp == `SPACE);
     reg [4:0] kpbuf = 5'd0;
     always @(posedge clk) kpbuf <= {keypress, kpbuf[4:1]};
 
@@ -157,7 +159,7 @@ module view(clk, scene, bird, pipes);
             ansi.goto(22, 16);
             $write("+----------------------------------------------+\n");
             ansi.goto(24, 28);
-            $write("press start to flap!!\n");
+            $write("press space to flap!!\n");
             ansi.reset();
         end
     endtask
