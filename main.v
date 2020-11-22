@@ -102,7 +102,7 @@ module controller(clk, inp, n_row, n_col, scene, bird, gaps);
 
     always @(posedge clk) begin
         if (scene == `SCENE_SPLASH && inp == `SPACE) scene <= `SCENE_PLAYING;
-        if (scene == `SCENE_PLAYING && inp == 120) scene <= `SCENE_GAMEOVER;
+        if (scene == `SCENE_PLAYING && y < 0) scene <= `SCENE_GAMEOVER;
     end
 
     wire keypress = (inp == `SPACE);
@@ -117,8 +117,7 @@ module controller(clk, inp, n_row, n_col, scene, bird, gaps);
         v <= (|kpbuf) ? 0.3 : v - 0.01;
         y <= y + v;
     end
-    wire [7:0] altitude = $rtoi(y);
-    assign bird = {altitude, is_flapping};
+    assign bird = {$rtoi(y), is_flapping};
 endmodule
 
 module view(clk, n_row, n_col, scene, bird, pipes);
