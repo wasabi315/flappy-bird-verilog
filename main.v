@@ -14,9 +14,9 @@ module main;
 
     wire [1:0] scene;
     wire [8:0] bird;
-    wire [24*3-1:0] gaps;
-    controller c(clk, inp, n_row, n_col, scene, bird, gaps);
-    view v(clk, n_row, n_col, scene, bird, gaps);
+    wire [24*3-1:0] pipes;
+    controller c(clk, inp, n_row, n_col, scene, bird, pipes);
+    view v(clk, n_row, n_col, scene, bird, pipes);
 endmodule
 
 module io(clk, inp, n_row, n_col);
@@ -82,29 +82,23 @@ endmodule
 
 `define KP_BUFLEN 5
 
-module controller(clk, inp, n_row, n_col, scene, bird, gaps);
+module controller(clk, inp, n_row, n_col, scene, bird, pipes);
     input  wire clk;
     input  wire [7:0] inp;
     input  wire [7:0] n_row;
     input  wire [7:0] n_col;
     output reg [1:0] scene;
     output wire [8:0] bird;
-    output reg [24*`N_PIPE-1:0] gaps;
+    output reg [24*`N_PIPE-1:0] pipes;
 
-    initial begin
-        scene = `SCENE_SPLASH;
-        gaps = {
-            8'd20, 8'd30, 8'd20,
-            8'd40, 8'd25, 8'd15,
-            8'd60, 8'd35, 8'd25
-        };
-    end
-
+    // scene
+    initial scene = `SCENE_SPLASH;
     always @(posedge clk) begin
         if (scene == `SCENE_SPLASH && inp == `SPACE) scene <= `SCENE_PLAYING;
         if (scene == `SCENE_PLAYING && y < 0) scene <= `SCENE_GAMEOVER;
     end
 
+    // bird
     wire keypress = (inp == `SPACE);
     reg [`KP_BUFLEN-1:0] kpbuf = 0;
     always @(posedge clk) kpbuf <= {keypress, kpbuf[`KP_BUFLEN-1:1]};
@@ -118,6 +112,21 @@ module controller(clk, inp, n_row, n_col, scene, bird, gaps);
         y <= y + v;
     end
     assign bird = {$rtoi(y), is_flapping};
+
+    // pipes
+    initial begin
+        pipes = {
+            8'd50, 8'd30, 8'd20,
+            8'd100, 8'd25, 8'd15,
+            8'd150, 8'd35, 8'd25
+        };
+    end
+    always @(posedge clk) if (scene == `SCENE_PLAYING) begin : upd_pipe
+        integer i;
+        for (i = 0; i < `N_PIPE; i = i + 1) begin
+            pipes[24*i+16+:8] <= pipes[24*i+16+:8] - 1;
+        end
+    end
 endmodule
 
 module view(clk, n_row, n_col, scene, bird, pipes);
@@ -155,6 +164,7 @@ module view(clk, n_row, n_col, scene, bird, pipes);
                 $display("game over");
             end
         endcase
+        ansi.goto(n_row, 0);
         ansi.flush();
     end
 
