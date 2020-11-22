@@ -72,11 +72,15 @@ endmodule
                              position              position
 */
 
+`define SPACE 32
+
 `define SCENE_SPLASH   0
 `define SCENE_PLAYING  1
 `define SCENE_GAMEOVER 2
 
-`define SPACE 32
+`define N_PIPE 3
+
+`define KP_BUFLEN 5
 
 module controller(clk, inp, n_row, n_col, scene, bird, gaps);
     input  wire clk;
@@ -85,7 +89,7 @@ module controller(clk, inp, n_row, n_col, scene, bird, gaps);
     input  wire [7:0] n_col;
     output reg [1:0] scene;
     output wire [8:0] bird;
-    output reg [24*3-1:0] gaps;
+    output reg [24*`N_PIPE-1:0] gaps;
 
     reg is_flapping;
     reg [7:0] altitude;
@@ -107,12 +111,12 @@ module controller(clk, inp, n_row, n_col, scene, bird, gaps);
     end
 
     wire keypress = (inp == `SPACE);
-    reg [4:0] kpbuf = 5'd0;
-    always @(posedge clk) kpbuf <= {keypress, kpbuf[4:1]};
+    reg [`KP_BUFLEN-1:0] kpbuf = 0;
+    always @(posedge clk) kpbuf <= {keypress, kpbuf[`KP_BUFLEN-1:1]};
 
     always @(posedge clk) begin
         is_flapping <= |kpbuf;
-        altitude <= (|kpbuf) ? altitude + 8'd1 : altitude;
+        altitude <= (|kpbuf) ? altitude + 1 : altitude;
     end
     assign bird = {altitude, is_flapping};
 endmodule
@@ -123,7 +127,7 @@ module view(clk, n_row, n_col, scene, bird, pipes);
     input  wire [7:0] n_col;
     input  wire [1:0] scene;
     input  wire [8:0] bird;
-    input  wire [24*3-1:0] pipes;
+    input  wire [24*`N_PIPE-1:0] pipes;
 
     wire is_flapping = bird[0];
     wire [7:0] altitude = bird[8:1];
@@ -228,23 +232,26 @@ module view(clk, n_row, n_col, scene, bird, pipes);
     endtask
 
     task draw_pipes;
+        integer i;
         begin
-            draw_pipe_pair(pipes1);
-            draw_pipe_pair(pipes2);
-            draw_pipe_pair(pipes3);
+            for (i = 0; i < `N_PIPE; i = i + 1) begin
+                draw_pipe_pair(pipes[24*i+:24]);
+            end
         end
     endtask
 
     task draw_pipe_pair(input [23:0] pipes);
         integer i;
         begin
-            ansi.fg("green");
-            for (i = 1; i <= n_row; i = i + 1) begin
-                ansi.goto(i, pipes[23:16] - 2);
-                if (i == pipes[15:8] || i == pipes[7:0]) $write("=====");
-                else if (i > pipes[15:8] || i < pipes[7:0]) $write("|███|");
+            if (pipes[23:16] + 2 <= n_col) begin
+                ansi.fg("green");
+                for (i = 1; i <= n_row; i = i + 1) begin
+                    ansi.goto(i, pipes[23:16] - 2);
+                    if (i == pipes[15:8] || i == pipes[7:0]) $write("=====");
+                    else if (i > pipes[15:8] || i < pipes[7:0]) $write("|███|");
+                end
+                ansi.reset();
             end
-            ansi.reset();
         end
     endtask
 endmodule
