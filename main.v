@@ -144,22 +144,22 @@ module view(clk, scene, bird, pipes);
     task draw_splash;
         begin
             ansi.fg("yellow");
-            ansi.goto(16, 16);
-            $write("+----------------------------------------------+\n");
-            ansi.goto(17, 16);
-            $write("|  ___ _                       ___ _        _  |\n");
-            ansi.goto(18, 16);
-            $write("| | __| |__ _ _ __ _ __ _  _  | _ |_)_ _ __| | |\n");
-            ansi.goto(19, 16);
-            $write("| | _|| / _` | '_ \\ '_ \\ || | | _ \\ | '_/ _` | |\n");
-            ansi.goto(20, 16);
-            $write("| |_| |_\\__,_| .__/ .__/\\_, | |___/_|_| \\__,_| |\n");
-            ansi.goto(21, 16);
-            $write("|            |_|  |_|   |__/                   |\n");
-            ansi.goto(22, 16);
-            $write("+----------------------------------------------+\n");
-            ansi.goto(24, 28);
-            $write("press space to flap!!\n");
+            ansi.goto(`HEIGHT/2 - 4, `WIDTH/2 - 24);
+            $write("+----------------------------------------------+");
+            ansi.goto(`HEIGHT/2 - 3, `WIDTH/2 - 24);
+            $write("|  ___ _                       ___ _        _  |");
+            ansi.goto(`HEIGHT/2 - 2, `WIDTH/2 - 24);
+            $write("| | __| |__ _ _ __ _ __ _  _  | _ |_)_ _ __| | |");
+            ansi.goto(`HEIGHT/2 - 1, `WIDTH/2 - 24);
+            $write("| | _|| / _` | '_ \\ '_ \\ || | | _ \\ | '_/ _` | |");
+            ansi.goto(`HEIGHT/2 + 0, `WIDTH/2 - 24);
+            $write("| |_| |_\\__,_| .__/ .__/\\_, | |___/_|_| \\__,_| |");
+            ansi.goto(`HEIGHT/2 + 1, `WIDTH/2 - 24);
+            $write("|            |_|  |_|   |__/                   |");
+            ansi.goto(`HEIGHT/2 + 2, `WIDTH/2 - 24);
+            $write("+----------------------------------------------+");
+            ansi.goto(`HEIGHT/2 + 4, `WIDTH/2 - 12);
+            $write("press space to flap!!");
             ansi.reset();
         end
     endtask
