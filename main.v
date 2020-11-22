@@ -128,10 +128,14 @@ module controller(clk, inp, n_row, n_col, scene, bird, pipes);
             8'd150, 8'd35, 8'd25
         };
     end
+    reg [31:0] cnt = 0;
     always @(posedge clk) if (scene == `SCENE_PLAYING) begin : upd_pipe
         integer i;
-        for (i = 0; i < `N_PIPE; i = i + 1) begin
-            pipes[24*i+16+:8] <= pipes[24*i+16+:8] - 1;
+        cnt <= (cnt == 3) ? 0 : cnt + 1;
+        if (cnt == 3) begin
+            for (i = 0; i < `N_PIPE; i = i + 1) begin
+                pipes[24*i+16+:8] <= pipes[24*i+16+:8] - 1;
+            end
         end
     end
 endmodule
