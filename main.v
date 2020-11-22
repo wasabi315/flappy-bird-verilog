@@ -25,7 +25,7 @@ module io(clk, inp, n_row, n_col);
     output reg [7:0] n_row;
     output reg [7:0] n_col;
 
-    initial inp = 0;
+    initial {inp, n_row, n_col} = 0;
 
     reg rtn;
     initial begin
@@ -96,8 +96,22 @@ module controller(clk, inp, n_row, n_col, scene, bird, pipes);
     output wire [8:0] bird;
     output reg [24*`N_PIPE-1:0] pipes;
 
+    reg is_flapping;
+    real a, v, y;
+    initial begin
+        scene = `SCENE_SPLASH;
+        is_flapping = 0;
+        a = `ACC1;
+        v = `VEL0;
+        y = n_row / 2;
+        pipes = {
+            8'd50, 8'd30, 8'd20,
+            8'd100, 8'd25, 8'd15,
+            8'd150, 8'd35, 8'd25
+        };
+    end
+
     // scene
-    initial scene = `SCENE_SPLASH;
     always @(posedge clk) begin
         if (scene == `SCENE_SPLASH && inp == `SPACE) scene <= `SCENE_PLAYING;
         if (scene == `SCENE_PLAYING && y < 0) scene <= `SCENE_GAMEOVER;
@@ -108,10 +122,6 @@ module controller(clk, inp, n_row, n_col, scene, bird, pipes);
     reg [`KP_BUFLEN-1:0] kpbuf = 0;
     always @(posedge clk) kpbuf <= {keypress, kpbuf[`KP_BUFLEN-1:1]};
 
-    reg is_flapping = 0;
-    real a = `ACC1;
-    real v = `VEL0;
-    real y = 20.0;
     always @(posedge clk) if (scene == `SCENE_PLAYING) begin
         is_flapping <= |kpbuf;
         a <= (v > `VEL_BND) ? `ACC1 : `ACC2;
@@ -121,18 +131,11 @@ module controller(clk, inp, n_row, n_col, scene, bird, pipes);
     assign bird = {$rtoi(y), is_flapping};
 
     // pipes
-    initial begin
-        pipes = {
-            8'd50, 8'd30, 8'd20,
-            8'd100, 8'd25, 8'd15,
-            8'd150, 8'd35, 8'd25
-        };
-    end
     reg [31:0] cnt = 0;
     always @(posedge clk) if (scene == `SCENE_PLAYING) begin : upd_pipe
         integer i;
-        cnt <= (cnt == 3) ? 0 : cnt + 1;
-        if (cnt == 3) begin
+        cnt <= (cnt == 2) ? 0 : cnt + 1;
+        if (cnt == 2) begin
             for (i = 0; i < `N_PIPE; i = i + 1) begin
                 pipes[24*i+16+:8] <= pipes[24*i+16+:8] - 1;
             end
