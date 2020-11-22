@@ -21,6 +21,7 @@ module keyboard(clk, inp);
     input  wire clk;
     output reg [7:0] inp;
 
+    initial inp = 0;
     always @(posedge clk) begin
         if ($feof(`STDIN)) $finish();
         inp <= $fgetc(`STDIN);
@@ -66,12 +67,16 @@ module controller(clk, inp, scene, bird, gaps);
     input  wire clk;
     input  wire [7:0] inp;
     output reg [1:0] scene;
-    output reg [8:0] bird;
+    output wire [8:0] bird;
     output reg [24*3-1:0] gaps;
+
+    reg is_flapping;
+    reg [7:0] altitude;
 
     initial begin
         scene = `SCENE_SPLASH;
-        bird = {8'd20, 1'd0};
+        is_flapping = 1'd0;
+        altitude = 8'd20;
         gaps = {
             8'd20, 8'd30, 8'd20,
             8'd40, 8'd25, 8'd15,
@@ -83,6 +88,16 @@ module controller(clk, inp, scene, bird, gaps);
         if (scene == `SCENE_SPLASH && inp != 0) scene <= `SCENE_PLAYING;
         if (scene == `SCENE_PLAYING && inp == 120) scene <= `SCENE_GAMEOVER;
     end
+
+    wire keypress = (inp == /* space */ 32);
+    reg [4:0] kpbuf = 5'd0;
+    always @(posedge clk) kpbuf <= {keypress, kpbuf[4:1]};
+
+    always @(posedge clk) begin
+        is_flapping <= |kpbuf;
+        altitude <= (|kpbuf) ? altitude + 8'd1 : altitude;
+    end
+    assign bird = {altitude, is_flapping};
 endmodule
 
 module view(clk, scene, bird, gaps);
@@ -90,6 +105,9 @@ module view(clk, scene, bird, gaps);
     input  wire [1:0] scene;
     input  wire [8:0] bird;
     input  wire [24*3-1:0] gaps;
+
+    wire is_flapping = bird[0];
+    wire [7:0] altitude = bird[8:1];
 
     ANSI ansi();
 
@@ -124,17 +142,16 @@ module view(clk, scene, bird, gaps);
         end
     endtask
 
-    reg [7:0] cnt = 0;
-    reg wing = 0;
+    `define WING_UP   0
+    `define WING_DOWN 1
+    reg wing = `WING_UP;
     task draw_bird;
-        begin
-            cnt <= (cnt == 5) ? 0 : cnt + 1;
-            if (cnt == 5) wing <= ~wing;
+        begin : bird
+            if (is_flapping) wing <= ~wing;
             case (wing)
-                0: draw_bird_wing_up();
-                1: draw_bird_wing_down();
+                `WING_UP: draw_bird_wing_up();
+                `WING_DOWN: draw_bird_wing_down();
             endcase
-            ansi.reset();
         end
     endtask
 
@@ -150,6 +167,7 @@ module view(clk, scene, bird, gaps);
             ansi.goto(40 - bird[8:1] - 1, 2);
             ansi.fg("yellow");
             $write("\\\\");
+            ansi.reset();
         end
     endtask
 
@@ -165,6 +183,7 @@ module view(clk, scene, bird, gaps);
             ansi.goto(40 - bird[8:1] + 1, 2);
             ansi.fg("yellow");
             $write("//");
+            ansi.reset();
         end
     endtask
 
