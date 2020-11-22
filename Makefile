@@ -1,6 +1,6 @@
-CSRCS = input.c
+CSRCS = io.c
 VSRCS = main.v
-EXES = main input
+EXES = main io
 
 all: $(EXES)
 
@@ -10,12 +10,12 @@ main: $(VSRCS)
 CC = gcc
 CFLAGS = -Wall -Werror -O2
 
-input: $(CSRCS)
+io: $(CSRCS)
 	$(CC) $(CFLAGS) -o $@ $(CSRCS)
 
 .PHONY: run clean
 run:
-	./input | ./main
+	./io | ./main
 
 clean:
 	$(RM) -f $(EXES)

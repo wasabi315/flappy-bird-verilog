@@ -8,7 +8,7 @@ module main;
     initial forever #50 clk <= ~clk;
 
     wire [7:0] inp;
-    keyboard k(clk, inp);
+    io io(clk, inp);
 
     wire [1:0] scene;
     wire [8:0] bird;
@@ -17,7 +17,7 @@ module main;
     view v(clk, scene, bird, gaps);
 endmodule
 
-module keyboard(clk, inp);
+module io(clk, inp);
     input  wire clk;
     output reg [7:0] inp;
 
