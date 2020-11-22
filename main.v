@@ -100,14 +100,18 @@ module controller(clk, inp, scene, bird, gaps);
     assign bird = {altitude, is_flapping};
 endmodule
 
-module view(clk, scene, bird, gaps);
+module view(clk, scene, bird, pipes);
     input  wire clk;
     input  wire [1:0] scene;
     input  wire [8:0] bird;
-    input  wire [24*3-1:0] gaps;
+    input  wire [24*3-1:0] pipes;
 
     wire is_flapping = bird[0];
     wire [7:0] altitude = bird[8:1];
+
+    wire [23:0] pipes1 = pipes[71:48];
+    wire [23:0] pipes2 = pipes[47:24];
+    wire [23:0] pipes3 = pipes[23: 0];
 
     ANSI ansi();
 
@@ -120,7 +124,7 @@ module view(clk, scene, bird, gaps);
 
             `SCENE_PLAYING: begin
                 draw_bird();
-                draw_pipe();
+                draw_pipes();
             end
 
             `SCENE_GAMEOVER: begin
@@ -187,30 +191,23 @@ module view(clk, scene, bird, gaps);
         end
     endtask
 
-    integer i;
-    integer j;
-    task draw_pipe;
+    task draw_pipes;
+        begin
+            draw_pipe_pair(pipes1);
+            draw_pipe_pair(pipes2);
+            draw_pipe_pair(pipes3);
+        end
+    endtask
+
+    task draw_pipe_pair(input [23:0] pipes);
+        integer i;
         begin
             ansi.fg("green");
-
-            for (i = 1; i <= 40; i = i + 1) begin
-                ansi.goto(i, gaps[71:64] - 2);
-                if (i == 20 || i == 30) $write("=====");
-                else if (i < 20 || i > 30) $write("|███|");
+            for (i = 1; i <= 40; i = i + 1) begin : loop
+                ansi.goto(i, pipes[23:16] - 2);
+                if (i == pipes[15:8] || i == pipes[7:0]) $write("=====");
+                else if (i > pipes[15:8] || i < pipes[7:0]) $write("|███|");
             end
-
-            for (i = 1; i <= 40; i = i + 1) begin
-                ansi.goto(i, gaps[47:40] - 2);
-                if (i == 15 || i == 25) $write("=====");
-                else if (i < 15 || i > 25) $write("|███|");
-            end
-
-            for (i = 1; i <= 40; i = i + 1) begin
-                ansi.goto(i, gaps[23:16] - 2);
-                if (i == 25 || i == 35) $write("=====");
-                else if (i < 25 || i > 35) $write("|███|");
-            end
-
             ansi.reset();
         end
     endtask
