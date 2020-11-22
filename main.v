@@ -8,7 +8,9 @@ module main;
     initial forever #50 clk <= ~clk;
 
     wire [7:0] inp;
-    io io(clk, inp);
+    wire [7:0] n_row;
+    wire [7:0] n_col;
+    io io(clk, inp, n_row, n_col);
 
     wire [1:0] scene;
     wire [8:0] bird;
@@ -17,14 +19,25 @@ module main;
     view v(clk, scene, bird, gaps);
 endmodule
 
-module io(clk, inp);
+module io(clk, inp, n_row, n_col);
     input  wire clk;
     output reg [7:0] inp;
+    output reg [7:0] n_row;
+    output reg [7:0] n_col;
 
     initial inp = 0;
-    always @(posedge clk) begin
-        if ($feof(`STDIN)) $finish();
-        inp <= $fgetc(`STDIN);
+
+    reg rtn;
+    initial begin
+        rtn = $fscanf(`STDIN, "%d %d", n_row, n_col);
+        $display("%0d, %0d", n_row, n_col);
+        if (rtn == -1) $finish();
+
+        while (!$feof(`STDIN)) begin
+            @(posedge clk) inp <= $fgetc(`STDIN);
+        end
+
+        $finish();
     end
 endmodule
 
