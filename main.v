@@ -114,9 +114,14 @@ module controller(clk, inp, n_row, n_col, scene, bird, gaps);
     reg [`KP_BUFLEN-1:0] kpbuf = 0;
     always @(posedge clk) kpbuf <= {keypress, kpbuf[`KP_BUFLEN-1:1]};
 
+    reg [7:0] cnt = 0;
+    always @(posedge clk) cnt <= (cnt == 9) ? 0 : cnt + 1;
+
+    reg signed [7:0] v = 0;
     always @(posedge clk) begin
         is_flapping <= |kpbuf;
-        altitude <= (|kpbuf) ? altitude + 1 : altitude;
+        v <= (scene == `SCENE_SPLASH) ? 0 :(|kpbuf) ? 2 : (cnt == 9) ? v - 1 : v;
+        altitude <= (cnt == 9) ? altitude + v : altitude;
     end
     assign bird = {altitude, is_flapping};
 endmodule
