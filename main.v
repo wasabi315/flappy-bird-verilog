@@ -82,6 +82,11 @@ endmodule
 
 `define KP_BUFLEN 5
 
+`define ACC1 -0.015
+`define ACC2 -0.025
+`define VEL_BND 0.1
+`define VEL0 0.275
+
 module controller(clk, inp, n_row, n_col, scene, bird, pipes);
     input  wire clk;
     input  wire [7:0] inp;
@@ -104,11 +109,13 @@ module controller(clk, inp, n_row, n_col, scene, bird, pipes);
     always @(posedge clk) kpbuf <= {keypress, kpbuf[`KP_BUFLEN-1:1]};
 
     reg is_flapping = 0;
+    real a = `ACC1;
+    real v = `VEL0;
     real y = 20.0;
-    real v = 0.0;
     always @(posedge clk) if (scene == `SCENE_PLAYING) begin
         is_flapping <= |kpbuf;
-        v <= (|kpbuf) ? 0.3 : v - 0.01;
+        a <= (v > `VEL_BND) ? `ACC1 : `ACC2;
+        v <= (|kpbuf) ? `VEL0 : v + a;
         y <= y + v;
     end
     assign bird = {$rtoi(y), is_flapping};
