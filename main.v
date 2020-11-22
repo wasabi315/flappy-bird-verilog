@@ -91,13 +91,8 @@ module controller(clk, inp, n_row, n_col, scene, bird, gaps);
     output wire [8:0] bird;
     output reg [24*`N_PIPE-1:0] gaps;
 
-    reg is_flapping;
-    reg [7:0] altitude;
-
     initial begin
         scene = `SCENE_SPLASH;
-        is_flapping = 1'd0;
-        altitude = 8'd20;
         gaps = {
             8'd20, 8'd30, 8'd20,
             8'd40, 8'd25, 8'd15,
@@ -114,15 +109,15 @@ module controller(clk, inp, n_row, n_col, scene, bird, gaps);
     reg [`KP_BUFLEN-1:0] kpbuf = 0;
     always @(posedge clk) kpbuf <= {keypress, kpbuf[`KP_BUFLEN-1:1]};
 
-    reg [7:0] cnt = 0;
-    always @(posedge clk) cnt <= (cnt == 9) ? 0 : cnt + 1;
-
-    reg signed [7:0] v = 0;
+    reg is_flapping = 0;
+    real y = 20.0;
+    real v = 0.0;
     always @(posedge clk) begin
         is_flapping <= |kpbuf;
-        v <= (scene == `SCENE_SPLASH) ? 0 :(|kpbuf) ? 2 : (cnt == 9) ? v - 1 : v;
-        altitude <= (cnt == 9) ? altitude + v : altitude;
+        v <= (|kpbuf) ? 0.3 : v - 0.01;
+        y <= y + v;
     end
+    wire [7:0] altitude = $rtoi(y);
     assign bird = {altitude, is_flapping};
 endmodule
 
