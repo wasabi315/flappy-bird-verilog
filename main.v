@@ -59,6 +59,9 @@ endmodule
                              position              position
 */
 
+`define HEIGHT 40
+`define WIDTH 80
+
 `define SCENE_SPLASH   0
 `define SCENE_PLAYING  1
 `define SCENE_GAMEOVER 2
@@ -119,6 +122,8 @@ module view(clk, scene, bird, pipes);
         ansi.clear();
         case (scene)
             `SCENE_SPLASH: begin
+                draw_bird();
+                draw_pipes();
                 draw_splash();
             end
 
@@ -136,13 +141,24 @@ module view(clk, scene, bird, pipes);
 
     task draw_splash;
         begin
-            $write({
-                " ___ _                       ___ _        _ \n",
-                "| __| |__ _ _ __ _ __ _  _  | _ |_)_ _ __| |\n",
-                "| _|| / _` | '_ \\ '_ \\ || | | _ \\ | '_/ _` |\n",
-                "|_| |_\\__,_| .__/ .__/\\_, | |___/_|_| \\__,_|\n",
-                "           |_|  |_|   |__/                  \n"
-            });
+            ansi.fg("yellow");
+            ansi.goto(16, 16);
+            $write("+----------------------------------------------+\n");
+            ansi.goto(17, 16);
+            $write("|  ___ _                       ___ _        _  |\n");
+            ansi.goto(18, 16);
+            $write("| | __| |__ _ _ __ _ __ _  _  | _ |_)_ _ __| | |\n");
+            ansi.goto(19, 16);
+            $write("| | _|| / _` | '_ \\ '_ \\ || | | _ \\ | '_/ _` | |\n");
+            ansi.goto(20, 16);
+            $write("| |_| |_\\__,_| .__/ .__/\\_, | |___/_|_| \\__,_| |\n");
+            ansi.goto(21, 16);
+            $write("|            |_|  |_|   |__/                   |\n");
+            ansi.goto(22, 16);
+            $write("+----------------------------------------------+\n");
+            ansi.goto(24, 28);
+            $write("press start to flap!!\n");
+            ansi.reset();
         end
     endtask
 
@@ -150,7 +166,7 @@ module view(clk, scene, bird, pipes);
     `define WING_DOWN 1
     reg wing = `WING_UP;
     task draw_bird;
-        begin : bird
+        begin
             if (is_flapping) wing <= ~wing;
             case (wing)
                 `WING_UP: draw_bird_wing_up();
@@ -161,33 +177,37 @@ module view(clk, scene, bird, pipes);
 
     task draw_bird_wing_up;
         begin
-            ansi.goto(40 - bird[8:1], 2);
-            ansi.fg("yellow");
-            $write("<\\\\");
-            ansi.fg("white");
-            $write("@");
-            ansi.fg("red");
-            $write(">");
-            ansi.goto(40 - bird[8:1] - 1, 2);
-            ansi.fg("yellow");
-            $write("\\\\");
-            ansi.reset();
+            if (altitude >= 0 && altitude < `HEIGHT - 1) begin
+                ansi.goto(`HEIGHT - altitude, 2);
+                ansi.fg("yellow");
+                $write("<\\\\");
+                ansi.fg("white");
+                $write("@");
+                ansi.fg("red");
+                $write(">");
+                ansi.goto(`HEIGHT - altitude - 1, 2);
+                ansi.fg("yellow");
+                $write("\\\\");
+                ansi.reset();
+            end
         end
     endtask
 
     task draw_bird_wing_down;
         begin
-            ansi.goto(40 - bird[8:1], 2);
-            ansi.fg("yellow");
-            $write("<//");
-            ansi.fg("white");
-            $write("@");
-            ansi.fg("red");
-            $write(">");
-            ansi.goto(40 - bird[8:1] + 1, 2);
-            ansi.fg("yellow");
-            $write("//");
-            ansi.reset();
+            if (altitude > 0 && altitude < `HEIGHT) begin
+                ansi.goto(`HEIGHT - altitude, 2);
+                ansi.fg("yellow");
+                $write("<//");
+                ansi.fg("white");
+                $write("@");
+                ansi.fg("red");
+                $write(">");
+                ansi.goto(`HEIGHT - altitude + 1, 2);
+                ansi.fg("yellow");
+                $write("//");
+                ansi.reset();
+            end
         end
     endtask
 
@@ -203,7 +223,7 @@ module view(clk, scene, bird, pipes);
         integer i;
         begin
             ansi.fg("green");
-            for (i = 1; i <= 40; i = i + 1) begin : loop
+            for (i = 1; i <= `HEIGHT; i = i + 1) begin
                 ansi.goto(i, pipes[23:16] - 2);
                 if (i == pipes[15:8] || i == pipes[7:0]) $write("=====");
                 else if (i > pipes[15:8] || i < pipes[7:0]) $write("|███|");
