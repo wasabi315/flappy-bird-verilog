@@ -89,6 +89,9 @@ endmodule
 
 `define ORIG 10
 
+`define GAP_LEN 8'd10
+`define PIPE_GAP 8'd50
+
 module controller(clk, inp, n_row, n_col, scene, bird, pipes);
     input  wire clk;
     input  wire [7:0] inp;
@@ -96,22 +99,30 @@ module controller(clk, inp, n_row, n_col, scene, bird, pipes);
     input  wire [7:0] n_col;
     output reg [1:0] scene;
     output wire [8:0] bird;
-    output reg [24*`N_PIPE-1:0] pipes;
+    output wire [24*`N_PIPE-1:0] pipes;
+
+    genvar i;
 
     reg is_flapping;
     real a, v, y;
+    reg [8*`N_PIPE-1:0] poss;
+    reg [8*`N_PIPE-1:0] mins;
+    wire [8*`N_PIPE-1:0] maxs;
     initial begin
         scene = `SCENE_SPLASH;
         is_flapping = 0;
         a = `ACC1;
         v = `VEL0;
         y = n_row / 2;
-        pipes = {
-            8'd50, 8'd30, 8'd20,
-            8'd100, 8'd25, 8'd15,
-            8'd150, 8'd35, 8'd25
-        };
+        poss = {8'd150, 8'd100, 8'd50};
+        mins = {8'd20, 8'd15, 8'd25};
     end
+
+    generate
+        for (i = 0; i < `N_PIPE; i = i + 1) begin
+            assign maxs[8*i+:8] = mins[8*i+:8] + `GAP_LEN;
+        end
+    endgenerate
 
     // scene
     always @(posedge clk) begin
@@ -138,11 +149,19 @@ module controller(clk, inp, n_row, n_col, scene, bird, pipes);
         integer i;
         cnt <= (cnt == 2) ? 0 : cnt + 1;
         if (cnt == 2) begin
-            for (i = 0; i < `N_PIPE; i = i + 1) begin
-                pipes[24*i+16+:8] <= pipes[24*i+16+:8] - 1;
+            if (poss[0+:8] == 0) begin
+                poss <= {poss[8*(`N_PIPE-1)+:8] + `PIPE_GAP, poss[8*`N_PIPE-1:8]};
+                mins <= {$urandom % (n_row - `GAP_LEN), mins[8*`N_PIPE-1:8]};
+            end else begin
+                poss <= poss - {8'd1, 8'd1, 8'd1};
             end
         end
     end
+    generate
+        for (i = 0; i < `N_PIPE; i = i + 1) begin
+            assign pipes[24*i+:24] = {poss[8*i+:8], maxs[8*i+:8], mins[8*i+:8]};
+        end
+    endgenerate
 endmodule
 
 module view(clk, n_row, n_col, scene, bird, pipes);
