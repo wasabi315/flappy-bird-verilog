@@ -260,10 +260,12 @@ module view(clk, n_row, n_col, scene, bird, pipes);
 
     `define WING_UP   0
     `define WING_DOWN 1
+    reg [1:0] cnt = 0;
     reg wing = `WING_UP;
     task draw_bird;
         begin
-            if (is_flapping) wing <= ~wing;
+            cnt <= cnt + 1;
+            if (!cnt) wing <= ~wing;
             case (wing)
                 `WING_UP: draw_bird_wing_up();
                 `WING_DOWN: draw_bird_wing_down();
