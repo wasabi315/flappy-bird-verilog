@@ -64,12 +64,12 @@ endmodule
   max_bnd  ---------------->  =====
 
   altitude ----> <\\@>                 min_bnd -->  =====
-                                                    |   |
-  min_bnd  ---------------->  =====                 |   |
-                              |   |                 |   |
-                              |   |                 |   |
-          ----------------------+---------------------+------------------------
-                             position              position
+                     |                              |   |
+  min_bnd  ----------+----->  =====                 |   |
+                     |        |   |                 |   |
+                     |        |   |                 |   |
+          +----------+----------+---------------------+------------------------
+          0       BIRD_COL   position              position
 */
 
 `define SPACE 32
@@ -87,9 +87,9 @@ endmodule
 `define VEL_BND 0.1
 `define VEL0 0.275
 
-`define ORIG 10
+`define BIRD_COL 10
 
-`define GAP_LEN 8'd10
+`define GAP_LEN 8'd8
 `define PIPE_GAP 8'd50
 
 module controller(clk, inp, n_row, n_col, scene, bird, pipes);
@@ -127,7 +127,7 @@ module controller(clk, inp, n_row, n_col, scene, bird, pipes);
     // scene
     always @(posedge clk) begin
         if (scene == `SCENE_SPLASH && inp == `SPACE) scene <= `SCENE_PLAYING;
-        if (scene == `SCENE_PLAYING && y < 0) scene <= `SCENE_GAMEOVER;
+        if (scene == `SCENE_PLAYING && (y < 0 || hit)) scene <= `SCENE_GAMEOVER;
     end
 
     // bird
@@ -162,6 +162,12 @@ module controller(clk, inp, n_row, n_col, scene, bird, pipes);
             assign pipes[24*i+:24] = {poss[8*i+:8], maxs[8*i+:8], mins[8*i+:8]};
         end
     endgenerate
+
+    // collsion detection
+    wire hit;
+    assign hit =
+        (poss[0+:8] <= `BIRD_COL + 2 && poss[0+:8] >= `BIRD_COL - 6) &&
+        ($rtoi(y) <= mins[0+:8] || $rtoi(y) >= maxs[0+:8]);
 endmodule
 
 module view(clk, n_row, n_col, scene, bird, pipes);
@@ -242,14 +248,14 @@ module view(clk, n_row, n_col, scene, bird, pipes);
     task draw_bird_wing_up;
         begin
             if (altitude >= 0 && altitude < n_row - 1) begin
-                ansi.goto(n_row - altitude, `ORIG);
+                ansi.goto(n_row - altitude, `BIRD_COL - 5);
                 ansi.fg("yellow");
                 $write("<\\\\");
                 ansi.fg("white");
                 $write("@");
                 ansi.fg("red");
                 $write(">");
-                ansi.goto(n_row - altitude - 1, `ORIG);
+                ansi.goto(n_row - altitude - 1, `BIRD_COL - 5);
                 ansi.fg("yellow");
                 $write("\\\\");
                 ansi.reset();
@@ -260,14 +266,14 @@ module view(clk, n_row, n_col, scene, bird, pipes);
     task draw_bird_wing_down;
         begin
             if (altitude > 0 && altitude < n_row) begin
-                ansi.goto(n_row - altitude, `ORIG);
+                ansi.goto(n_row - altitude, `BIRD_COL - 5);
                 ansi.fg("yellow");
                 $write("<//");
                 ansi.fg("white");
                 $write("@");
                 ansi.fg("red");
                 $write(">");
-                ansi.goto(n_row - altitude + 1, `ORIG);
+                ansi.goto(n_row - altitude + 1, `BIRD_COL - 5);
                 ansi.fg("yellow");
                 $write("//");
                 ansi.reset();
@@ -287,12 +293,12 @@ module view(clk, n_row, n_col, scene, bird, pipes);
     task draw_pipe_pair(input [23:0] pipes);
         integer i;
         begin
-            if (pipes[23:16] + 2 + `ORIG <= n_col) begin
+            if (pipes[23:16] + 2 <= n_col) begin
                 ansi.fg("green");
                 for (i = 1; i <= n_row; i = i + 1) begin
-                    ansi.goto(i, pipes[23:16] - 2 + `ORIG);
-                    if (i == pipes[15:8] || i == pipes[7:0]) $write("=====");
-                    else if (i > pipes[15:8] || i < pipes[7:0]) $write("|███|");
+                    ansi.goto(i, pipes[23:16] - 2);
+                    if (i == (n_row - pipes[15:8]) || i == (n_row - pipes[7:0])) $write("=====");
+                    else if (i < (n_row - pipes[15:8]) || i > (n_row - pipes[7:0])) $write("|███|");
                 end
                 ansi.reset();
             end
