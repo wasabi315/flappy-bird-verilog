@@ -90,6 +90,8 @@ endmodule
 `define POS_DELTA 50
 `define POS_VEL -0.3
 
+`define ORIG 10
+
 module controller(clk, inp, n_row, n_col, scene, bird, pipes);
     input  wire clk;
     input  wire [7:0] inp;
@@ -228,14 +230,14 @@ module view(clk, n_row, n_col, scene, bird, pipes);
     task draw_bird_wing_up;
         begin
             if (altitude >= 0 && altitude < n_row - 1) begin
-                ansi.goto(n_row - altitude, 2);
+                ansi.goto(n_row - altitude, `ORIG);
                 ansi.fg("yellow");
                 $write("<\\\\");
                 ansi.fg("white");
                 $write("@");
                 ansi.fg("red");
                 $write(">");
-                ansi.goto(n_row - altitude - 1, 2);
+                ansi.goto(n_row - altitude - 1, `ORIG);
                 ansi.fg("yellow");
                 $write("\\\\");
                 ansi.reset();
@@ -246,14 +248,14 @@ module view(clk, n_row, n_col, scene, bird, pipes);
     task draw_bird_wing_down;
         begin
             if (altitude > 0 && altitude < n_row) begin
-                ansi.goto(n_row - altitude, 2);
+                ansi.goto(n_row - altitude, `ORIG);
                 ansi.fg("yellow");
                 $write("<//");
                 ansi.fg("white");
                 $write("@");
                 ansi.fg("red");
                 $write(">");
-                ansi.goto(n_row - altitude + 1, 2);
+                ansi.goto(n_row - altitude + 1, `ORIG);
                 ansi.fg("yellow");
                 $write("//");
                 ansi.reset();
@@ -273,10 +275,10 @@ module view(clk, n_row, n_col, scene, bird, pipes);
     task draw_pipe_pair(input [23:0] pipes);
         integer i;
         begin
-            if (pipes[23:16] + 2 <= n_col) begin
+            if (pipes[23:16] + 2 + `ORIG <= n_col) begin
                 ansi.fg("green");
                 for (i = 1; i <= n_row; i = i + 1) begin
-                    ansi.goto(i, pipes[23:16] - 2);
+                    ansi.goto(i, pipes[23:16] - 2 + `ORIG);
                     if (i == pipes[15:8] || i == pipes[7:0]) $write("=====");
                     else if (i > pipes[15:8] || i < pipes[7:0]) $write("|███|");
                 end
