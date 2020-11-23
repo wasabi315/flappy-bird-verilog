@@ -260,7 +260,7 @@ module view(clk, n_row, n_col, scene, bird, pipes);
 
     `define WING_UP   0
     `define WING_DOWN 1
-    reg [1:0] cnt = 0;
+    reg [2:0] cnt = 0;
     reg wing = `WING_UP;
     task draw_bird;
         begin
