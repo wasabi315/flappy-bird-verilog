@@ -100,9 +100,7 @@ module controller(clk, inp, n_row, n_col, scene, bird, pipes);
 
     reg is_flapping;
     real a, v, y;
-    real poss [0:`N_PIPE-1];
-    initial begin : init
-        integer i;
+    initial begin
         scene = `SCENE_SPLASH;
         is_flapping = 0;
         a = `ACC1;
@@ -113,9 +111,6 @@ module controller(clk, inp, n_row, n_col, scene, bird, pipes);
             8'd100, 8'd25, 8'd15,
             8'd150, 8'd35, 8'd25
         };
-        poss[0] = 50;
-        poss[1] = 100;
-        poss[2] = 150;
     end
 
     // scene
@@ -138,17 +133,14 @@ module controller(clk, inp, n_row, n_col, scene, bird, pipes);
     assign bird = {$rtoi(y), is_flapping};
 
     // pipes
-    always @(posedge clk) if (scene == `SCENE_PLAYING) begin : upd_poss
-        integer i;
-        for (i = 0; i < `N_PIPE; i = i + 1) begin
-            poss[i] <= poss[i] - 0.3;
-        end
-    end
-
+    reg [31:0] cnt = 0;
     always @(posedge clk) if (scene == `SCENE_PLAYING) begin : upd_pipe
         integer i;
-        for (i = 0; i < `N_PIPE; i = i + 1) begin
-            pipes[24*i+16+:8] <= $rtoi(poss[i]);
+        cnt <= (cnt == 2) ? 0 : cnt + 1;
+        if (cnt == 2) begin
+            for (i = 0; i < `N_PIPE; i = i + 1) begin
+                pipes[24*i+16+:8] <= pipes[24*i+16+:8] - 1;
+            end
         end
     end
 endmodule
