@@ -115,11 +115,11 @@ module controller(clk, inp, n_row, n_col, scene, bird, pipes);
         v = `VEL0;
         y = n_row / 2;
         poss = {8'd150, 8'd100, 8'd50};
-        mins = {8'd20, 8'd15, 8'd25};
     end
 
     generate
         for (i = 0; i < `N_PIPE; i = i + 1) begin
+            initial mins[8*i+:8] = $urandom % (n_row - `GAP_LEN);
             assign maxs[8*i+:8] = mins[8*i+:8] + `GAP_LEN;
         end
     endgenerate
