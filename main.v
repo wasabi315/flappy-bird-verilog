@@ -125,9 +125,12 @@ module controller(clk, inp, n_row, n_col, scene, bird, pipes);
     endgenerate
 
     // scene
+    reg [31:0] gocnt = 0;
     always @(posedge clk) begin
         if (scene == `SCENE_SPLASH && inp == `SPACE) scene <= `SCENE_PLAYING;
         if (scene == `SCENE_PLAYING && (y < 0 || hit)) scene <= `SCENE_GAMEOVER;
+        if (scene == `SCENE_GAMEOVER) gocnt <= gocnt + 1;
+        if (gocnt == 90) $finish();
     end
 
     // bird
@@ -202,7 +205,9 @@ module view(clk, n_row, n_col, scene, bird, pipes);
             end
 
             `SCENE_GAMEOVER: begin
-                $display("game over");
+                draw_bird();
+                draw_pipes();
+                draw_gameover();
             end
         endcase
         ansi.goto(n_row, 0);
@@ -228,6 +233,27 @@ module view(clk, n_row, n_col, scene, bird, pipes);
             $write("+----------------------------------------------+");
             ansi.goto(n_row/2 + 4, n_col/2 - 12);
             $write("press space to flap!!");
+            ansi.reset();
+        end
+    endtask
+
+    task draw_gameover;
+        begin
+            ansi.fg("red");
+            ansi.goto(n_row/2 - 3, n_col/2 - 22);
+            $write("+-----------------------------------------+");
+            ansi.goto(n_row/2 - 2, n_col/2 - 22);
+            $write("|   ___                                   |");
+            ansi.goto(n_row/2 - 1, n_col/2 - 22);
+            $write("|  / __|__ _ _ __  ___   _____ _____ _ _  |");
+            ansi.goto(n_row/2 + 0, n_col/2 - 22);
+            $write("| | (_ / _` | '  \\/ -_) / _ \\ V / -_) '_| |");
+            ansi.goto(n_row/2 + 1, n_col/2 - 22);
+            $write("|  \\___\\__,_|_|_|_\\___| \\___/\\_/\\___|_|   |");
+            ansi.goto(n_row/2 + 2, n_col/2 - 22);
+            $write("|                                         |");
+            ansi.goto(n_row/2 + 3, n_col/2 - 22);
+            $write("+-----------------------------------------+");
             ansi.reset();
         end
     endtask
