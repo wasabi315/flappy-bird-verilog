@@ -87,9 +87,6 @@ endmodule
 `define VEL_BND 0.1
 `define VEL0 0.275
 
-`define POS_DELTA 50
-`define POS_VEL -0.3
-
 `define ORIG 10
 
 module controller(clk, inp, n_row, n_col, scene, bird, pipes);
@@ -141,12 +138,16 @@ module controller(clk, inp, n_row, n_col, scene, bird, pipes);
     assign bird = {$rtoi(y), is_flapping};
 
     // pipes
+    always @(posedge clk) if (scene == `SCENE_PLAYING) begin : upd_poss
+        integer i;
+        for (i = 0; i < `N_PIPE; i = i + 1) begin
+            poss[i] <= poss[i] - 0.3;
+        end
+    end
+
     always @(posedge clk) if (scene == `SCENE_PLAYING) begin : upd_pipe
         integer i;
         for (i = 0; i < `N_PIPE; i = i + 1) begin
-            poss[i] <= (poss[i] > 0)
-                ? poss[i] + `POS_VEL
-                : poss[(i + 1) % `N_PIPE] + `POS_DELTA*(`N_PIPE - 1);
             pipes[24*i+16+:8] <= $rtoi(poss[i]);
         end
     end
