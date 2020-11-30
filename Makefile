@@ -4,8 +4,11 @@ EXES = main io
 
 all: $(EXES)
 
+VC = iverilog
+VFLAGS = -Wall
+
 main: $(VSRCS)
-	iverilog -o $@ $(VSRCS)
+	$(VC) $(VFLAGS) -o $@ $(VSRCS)
 
 CC = gcc
 CFLAGS = -Wall -Werror -O2
