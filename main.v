@@ -3,14 +3,16 @@
 
 `define STDIN 32'h8000_0000
 
-module main;
+module main ();
     reg clk = 0;
     initial forever #50 clk <= ~clk;
 
-    wire [7:0] inp;
     wire [7:0] n_row;
     wire [7:0] n_col;
-    io io(clk, inp, n_row, n_col);
+    init i(n_row, n_col);
+
+    wire [7:0] inp;
+    io io(clk, inp);
 
     wire [1:0] scene;
     wire [8:0] bird;
@@ -19,24 +21,28 @@ module main;
     view v(clk, n_row, n_col, scene, bird, pipes);
 endmodule
 
-module io(clk, inp, n_row, n_col);
-    input  wire clk;
-    output reg [7:0] inp;
-    output reg [7:0] n_row;
-    output reg [7:0] n_col;
+module init (
+    output reg [7:0] n_row,
+    output reg [7:0] n_col
+);
+    initial {n_row, n_col} = 0;
 
-    initial {inp, n_row, n_col} = 0;
-
-    reg rtn;
+    integer rtn;
     initial begin
         rtn = $fscanf(`STDIN, "%d %d", n_row, n_col);
-        $display("%0d, %0d", n_row, n_col);
         if (rtn == -1) $finish();
+    end
+endmodule
 
-        while (!$feof(`STDIN)) begin
+module io (
+    input  wire clk,
+    output reg [7:0] inp
+);
+    initial inp = 0;
+
+    initial begin
+        while (!$feof(`STDIN))
             @(posedge clk) inp <= $fgetc(`STDIN);
-        end
-
         $finish();
     end
 endmodule
@@ -92,15 +98,15 @@ endmodule
 `define GAP_LEN 8'd8
 `define PIPE_GAP 8'd50
 
-module controller(clk, inp, n_row, n_col, scene, bird, pipes);
-    input  wire clk;
-    input  wire [7:0] inp;
-    input  wire [7:0] n_row;
-    input  wire [7:0] n_col;
-    output reg [1:0] scene;
-    output wire [8:0] bird;
-    output wire [24*`N_PIPE-1:0] pipes;
-
+module controller (
+    input  wire clk,
+    input  wire [7:0] inp,
+    input  wire [7:0] n_row,
+    input  wire [7:0] n_col,
+    output reg  [1:0] scene,
+    output wire [8:0] bird,
+    output wire [24*`N_PIPE-1:0] pipes
+);
     genvar i;
 
     reg is_flapping;
@@ -173,14 +179,14 @@ module controller(clk, inp, n_row, n_col, scene, bird, pipes);
         ($rtoi(y) <= mins[0+:8] || $rtoi(y) >= maxs[0+:8]);
 endmodule
 
-module view(clk, n_row, n_col, scene, bird, pipes);
-    input  wire clk;
-    input  wire [7:0] n_row;
-    input  wire [7:0] n_col;
-    input  wire [1:0] scene;
-    input  wire [8:0] bird;
-    input  wire [24*`N_PIPE-1:0] pipes;
-
+module view (
+    input  wire clk,
+    input  wire [7:0] n_row,
+    input  wire [7:0] n_col,
+    input  wire [1:0] scene,
+    input  wire [8:0] bird,
+    input  wire [24*`N_PIPE-1:0] pipes
+);
     wire is_flapping = bird[0];
     wire [7:0] altitude = bird[8:1];
 
