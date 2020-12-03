@@ -140,14 +140,13 @@ module controller (
     end
 
     // bird
-    wire keypress = (inp == `SPACE);
-    reg [`KP_BUFLEN-1:0] kpbuf = 0;
-    always @(posedge clk) kpbuf <= {keypress, kpbuf[`KP_BUFLEN-1:1]};
+    wire pressed;
+    keypress_detect kd(clk, inp, pressed);
 
     always @(posedge clk) if (scene == `SCENE_PLAYING) begin
-        is_flapping <= |kpbuf;
+        is_flapping <= pressed;
         a <= (v > `VEL_BND) ? `ACC1 : `ACC2;
-        v <= (|kpbuf) ? `VEL0 : v + a;
+        v <= (pressed) ? `VEL0 : v + a;
         y <= y + v;
     end
     assign bird = {$rtoi(y), is_flapping};
@@ -177,6 +176,19 @@ module controller (
     assign hit =
         (poss[0+:8] <= `BIRD_COL + 2 && poss[0+:8] >= `BIRD_COL - 6) &&
         ($rtoi(y) <= mins[0+:8] || $rtoi(y) >= maxs[0+:8]);
+endmodule
+
+module keypress_detect (
+    input  wire clk,
+    input  wire [7:0] inp,
+    output wire pressed
+);
+    reg [4:0] inpbuf = 0;
+    always @(posedge clk) begin
+        inpbuf <= {(inp == `SPACE), inpbuf[4:1]};
+    end
+
+    assign pressed = |inpbuf;
 endmodule
 
 module view (
@@ -216,7 +228,7 @@ module view (
                 draw_gameover();
             end
         endcase
-        ansi.goto(n_row, 0);
+        ansi.goto(0, 0);
         ansi.flush();
     end
 
