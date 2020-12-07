@@ -12,7 +12,7 @@ module main ();
     init i(n_row, n_col);
 
     wire [7:0] inp;
-    io io(clk, inp);
+    keyboard k(clk, inp);
 
     wire [1:0] scene;
     wire [8:0] bird;
@@ -34,7 +34,7 @@ module init (
     end
 endmodule
 
-module io (
+module keyboard (
     input  wire clk,
     output reg [7:0] inp
 );
